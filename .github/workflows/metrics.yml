@@ -1,0 +1,30 @@
+name: Development Metrics
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Каждый понедельник в 8:00
+  workflow_dispatch:       # Ручной запуск
+
+jobs:
+  collect-metrics:
+    runs-on: windows-latest  # Windows-раннер
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get commit statistics
+        shell: pwsh
+        run: |
+          $totalCommits = (git rev-list --count HEAD)
+          $activeAuthors = (git shortlog -sn | Measure-Object -Line).Lines
+          Write-Host "Total commits: $totalCommits"
+          Write-Host "Active authors: $activeAuthors"
+          # Сохранить в файл
+          "total_commits=$totalCommits" >> $env:GITHUB_OUTPUT
+      
+      - name: Upload metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-report
+          path: metrics.jsons
